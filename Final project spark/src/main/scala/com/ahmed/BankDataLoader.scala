@@ -1,23 +1,19 @@
 package com.ahmed
 
+import org.apache.hadoop.shaded.org.apache.commons.net.ntp.TimeStamp
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, SparkSession}
+
+import java.text.SimpleDateFormat
+import java.util.Date
 import org.apache.zookeeper.Transaction
+import org.json4s.DefaultFormats.dateFormat
 
 object BankDataLoader {
-  def loadDataFromCSV(sc: SparkContext, filename: String): RDD[Transaction] = {
-    val dataRDD = sc.textFile(filename)
-    // Use zipWithIndex to add an index to each line of the RDD
-    val indexedDataRDD = dataRDD.zipWithIndex()
 
-    // Filter out the line with index 0 (header line)
-    val nonHeaderLinesRDD = indexedDataRDD.filter { case (_, index) => index > 0 }
-
-    val transactionRDD = nonHeaderLinesRDD.map { case (line, _) =>
-      val fields = line.split(",")
-      Transaction(fields(0).toInt, fields(1), fields(2), fields(3).toDouble)
-    }
-
-    transactionRDD
+  def loadDataFromCSV(spark: SparkSession, filename: String): DataFrame = {
+    val dataDF = spark.read.option("header", "true").option("inferSchema", "true").csv(filename)
+    dataDF
   }
 }

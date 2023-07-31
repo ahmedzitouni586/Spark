@@ -1,23 +1,39 @@
 package com.ahmed
 
+import com.ahmed.BankDataLoader.loadDataFromCSV
+import com.ahmed.CustomerTransaction.customerTransactionFrequency
+import com.ahmed.DataCleaning.handleMissingData
+
+import com.ahmed.GroupTransactions.groupByTransactionDate
+//import com.ahmed.PlotTransaction.plotTransactionTrends
+import com.ahmed.StatisticsCalculating.calculateBasicStatistics
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.{SparkConf, SparkContext}
 
 object Main {
+
+
+
   def main(args: Array[String]): Unit = {
-    val sparkConf = new SparkConf().setAppName("BankDataAnalysis").setMaster("local[*]")
-    val sc = new SparkContext(sparkConf)
+    val spark = SparkSession.builder()
+      .appName("Load CSV Data")
+      .master("local")
+      .getOrCreate()
 
-    // Load data from CSV and perform data cleaning
-    val dataRDD = BankDataLoader.loadDataFromCSV(sc, "input.csv")
-    val cleanedDataRDD = DataCleaning.handleMissingData(dataRDD)
+    val transactions = loadDataFromCSV(spark, "input.csv")
 
-    // display cleanedRDD
-    //val collectedData = cleanedDataRDD.collect()
-    //collectedData.foreach(println)
-    val basicStatistics = StatisticsCalculating.calculateBasicStatistics(cleanedDataRDD)
-    val customerTransaction = CustomerTransaction.customerTransactionFrequency(cleanedDataRDD)
-    val groupTransactions = GroupTransactions.groupByTransactionDate(cleanedDataRDD, "2023-07-03")
-    val customerSegmentation = CustomerSegmentation.customerSegmentation(cleanedDataRDD)
-
+    Exploredataset.exploreDataset(transactions)
+    val filteredData = handleMissingData(transactions)
+    Exploredataset.exploreDataset(filteredData)
+    calculateBasicStatistics(filteredData)
+    println("**************************************************************")
+    val transactionFrequencyDF = customerTransactionFrequency(filteredData)
+    transactionFrequencyDF.show()
+    println("*******************************************************************")
+    val dailyData = groupByTransactionDate(filteredData, "day")
+    val monthlyData = groupByTransactionDate(filteredData, "month")
+    dailyData.show()
+    monthlyData.show()
+    //plotTransactionTrends(filteredData, "day")
   }
 }

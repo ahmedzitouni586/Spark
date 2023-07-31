@@ -1,4 +1,6 @@
 package com.ahmed
 
-case class Transaction(customer_id: Int, transaction_date: String, transaction_type: String, amount: Double)
+import org.apache.hadoop.shaded.org.apache.commons.net.ntp.TimeStamp
+
+case class Transaction(customer_id: Int, transaction_date: TimeStamp, transaction_type: String, amount: Double)
 
